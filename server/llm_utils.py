@@ -425,11 +425,11 @@ def run_episode(
         error_msg = f"Reset timeout/connection error: {str(e)[:200]}"
         _log_stderr(error_msg)
         logging.info(
-            f"[STEP] step=1 action={{}} reward=0.00 done=true error={error_msg}",
+            f"[STEP] step=1 action={{}} reward=0.01 done=true error={error_msg}",
             flush=True,
         )
         logging.info(
-            f"[END] success=false steps=0 rewards=0.00",
+            f"[END] success=false steps=0 rewards=0.01",
             flush=True,
         )
         return {"task_id": task_id, "steps": 0, "score": 0.0, "rewards": [], "success": False}
@@ -437,11 +437,11 @@ def run_episode(
         error_msg = f"Reset failed: {str(e)[:200]}"
         _log_stderr(error_msg)
         logging.info(
-            f"[STEP] step=1 action={{}} reward=0.00 done=true error={error_msg}",
+            f"[STEP] step=1 action={{}} reward=0.01 done=true error={error_msg}",
             flush=True,
         )
         logging.info(
-            f"[END] success=false steps=0 rewards=0.00",
+            f"[END] success=false steps=0 rewards=0.01",
             flush=True,
         )
         return {"task_id": task_id, "steps": 0, "score": 0.0, "rewards": [], "success": False}
