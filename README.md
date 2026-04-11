@@ -36,6 +36,7 @@ curl https://yashaskn01-support-triage-env.hf.space/health
 export HF_TOKEN=<your-token>
 export API_BASE_URL=https://router.huggingface.co/v1
 export MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
+export ENV_BASE_URL=https://yashaskn01-support-triage-env.hf.space
 python inference.py
 # Expected stdout: [START]/[STEP]/[END] lines only. All debug to stderr.
 ```
