@@ -1,0 +1,19 @@
+# Environment secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# Test artifacts
+*.log
+*.txt
+!requirements.txt
+!.env.example
+
+*.pyc

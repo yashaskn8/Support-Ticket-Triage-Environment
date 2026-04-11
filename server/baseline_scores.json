@@ -1,0 +1,58 @@
+{
+  "model": "Qwen/Qwen2.5-72B-Instruct",
+  "timestamp": "2026-04-07T15:51:27.426565+00:00",
+  "seed": 42,
+  "git_commit": "a64cc9000477368be5811b8523266042457a0998",
+  "env_url": "http://localhost:7860",
+  "stubbed": false,
+  "warnings": [],
+  "overall_mean": 0.7916,
+  "tasks": {
+    "classify": {
+      "mean_score": 0.7975,
+      "steps": 10,
+      "per_step_rewards": [
+        1.0,
+        0.075,
+        0.9,
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "success": true
+    },
+    "prioritize": {
+      "mean_score": 0.63,
+      "steps": 10,
+      "per_step_rewards": [
+        0.5475,
+        0.65,
+        0.74,
+        0.03750000000000002,
+        0.5475,
+        1.0,
+        0.5475,
+        1.0,
+        0.59,
+        0.64
+      ],
+      "success": true
+    },
+    "resolve": {
+      "mean_score": 0.9472,
+      "steps": 5,
+      "per_step_rewards": [
+        0.916,
+        0.96,
+        0.95,
+        0.91,
+        1.0
+      ],
+      "success": true
+    }
+  }
+}
