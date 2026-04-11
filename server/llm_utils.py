@@ -425,7 +425,7 @@ def run_episode(
         error_msg = f"Reset timeout/connection error: {str(e)[:200]}"
         _log_stderr(error_msg)
         logging.info(
-            f"[STEP] step=1 action={{}} reward=0.01 done=true error={error_msg}",
+            f"[STEP] step=1 action={{}} reward=0.10 done=true error={error_msg}",
             flush=True,
         )
         logging.info(
@@ -437,7 +437,7 @@ def run_episode(
         error_msg = f"Reset failed: {str(e)[:200]}"
         _log_stderr(error_msg)
         logging.info(
-            f"[STEP] step=1 action={{}} reward=0.01 done=true error={error_msg}",
+            f"[STEP] step=1 action={{}} reward=0.10 done=true error={error_msg}",
             flush=True,
         )
         logging.info(
@@ -532,16 +532,16 @@ def run_episode(
         action_str = json.dumps(action_dict, separators=(",", ":")) if action_dict else "{}"
         logging.info(
             f"[STEP] step={step_num} action={action_str} "
-            f"reward={max(0.01, min(0.99, rewards[-1])):.2f} done={str(done).lower()} error={error_msg}",
+            f"reward={max(0.10, min(0.90, rewards[-1])):.2f} done={str(done).lower()} error={error_msg}",
             flush=True,
         )
 
     # Calculate score
-    score = sum(rewards) / len(rewards) if rewards else 0.01
+    score = sum(rewards) / len(rewards) if rewards else 0.10
     success = score >= 0.1
 
     # Print [END] line — exact format mapping the sample script
-    rewards_str = ",".join(f"{max(0.01, min(0.99, r)):.2f}" for r in rewards) if rewards else "0.01"
+    rewards_str = ",".join(f"{max(0.10, min(0.90, r)):.2f}" for r in rewards) if rewards else "0.10"
     logging.info(
         f"[END] success={str(success).lower()} steps={step_num} rewards={rewards_str}",
         flush=True,

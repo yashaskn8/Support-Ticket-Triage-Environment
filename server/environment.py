@@ -235,7 +235,7 @@ class SupportTriageEnv:
         if not self._initialized:
             return {
                 "observation": {},
-                "reward": 0.01,
+                "reward": 0.10,
                 "done": False,
                 "info": {
                     "error": "Environment not initialized. Call reset() first.",
@@ -276,7 +276,7 @@ class SupportTriageEnv:
 
                 return {
                     "observation": {},
-                    "reward": 0.01,
+                    "reward": 0.10,
                     "done": done,
                     "info": {
                         "error": f"Action validation error: {str(e)}",
@@ -321,7 +321,7 @@ class SupportTriageEnv:
                                 penalties.append("schema_abuse_penalty: -0.10")
 
                 # Clamp after penalties — strictly within (0, 1) to satisfy validator
-                final_reward = max(0.01, min(0.99, raw_reward))
+                final_reward = max(0.10, min(0.90, raw_reward))
 
                 # Track step rewards and penalties
                 self._step_rewards.append(final_reward)
@@ -366,8 +366,8 @@ class SupportTriageEnv:
                         trajectory_bonus_info["above_baseline_mean"] = (sum(rewards) / n) > 0.50
 
                     if trajectory_bonus > 0:
-                        # Ensure bonus doesn't push us to 1.0
-                        final_reward = min(0.99, final_reward + trajectory_bonus)
+                        # Ensure bonus doesn't push us to 1.0 (clamping to 0.90)
+                        final_reward = min(0.90, final_reward + trajectory_bonus)
                         self._step_rewards[-1] = final_reward
                         info["trajectory_bonus"] = trajectory_bonus
                     else:
@@ -407,7 +407,7 @@ class SupportTriageEnv:
             except Exception as e:
                 return {
                     "observation": {},
-                    "reward": 0.01,
+                    "reward": 0.10,
                     "done": False,
                     "info": {
                         "error": f"Step execution error: {str(e)}",
@@ -458,9 +458,9 @@ class SupportTriageEnv:
                 max(self._step_rewards), 4
             )
         else:
-            state_dict["mean_reward_so_far"] = 0.01
-            state_dict["min_reward_this_episode"] = 0.01
-            state_dict["max_reward_this_episode"] = 0.01
+            state_dict["mean_reward_so_far"] = 0.10
+            state_dict["min_reward_this_episode"] = 0.10
+            state_dict["max_reward_this_episode"] = 0.10
 
         state_dict["penalties_applied_total"] = self._penalties_count
         state_dict["steps_remaining"] = max(

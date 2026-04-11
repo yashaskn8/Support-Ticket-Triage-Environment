@@ -148,7 +148,7 @@ def log_end(success: bool, steps: int, rewards: list) -> None:
     """
     print(
         f"[END] success={str(success).lower()} steps={steps} "
-        f"rewards={','.join(f'{r:.2f}' for r in rewards) if rewards else '0.01'}",
+        f"rewards={','.join(f'{r:.2f}' for r in rewards) if rewards else '0.10'}",
         flush=True,
     )
 
@@ -259,18 +259,18 @@ def run_task(client: OpenAI, task_id: str) -> None:
             step_resp.raise_for_status()
             step_data   = step_resp.json()
             reward = float(step_data.get("reward", 0.0))
-            reward = max(0.01, min(0.99, reward))
+            reward = max(0.10, min(0.90, reward))
             done        = bool(step_data.get("done", False))
             observation = step_data.get("observation", {})
-
+ 
             log_step(step=step_num, action=action, reward=reward,
                      done=done, error=step_data.get("error"))
             rewards.append(reward)
             steps    += 1
             step_num += 1
-
-        mean_score = sum(rewards) / len(rewards) if rewards else 0.01
-        success    = mean_score >= SUCCESS_THRESHOLDS.get(task_id, 0.01)
+ 
+        mean_score = sum(rewards) / len(rewards) if rewards else 0.10
+        success    = mean_score >= SUCCESS_THRESHOLDS.get(task_id, 0.40)
 
     except httpx.HTTPError as exc:
         print(f"[DEBUG] HTTP error ({task_id}): {exc}", file=sys.stderr, flush=True)
