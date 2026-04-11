@@ -86,7 +86,7 @@ class ClassifyTask:
         self._current_index = 0
         self._step_number = 0
         self._done = False
-        self._cumulative_reward = 0.01
+        self._cumulative_reward = 0.0
         self._max_steps = 10
 
     def reset(self) -> Dict[str, Any]:
@@ -114,7 +114,7 @@ class ClassifyTask:
         self._current_index = 0
         self._step_number = 0
         self._done = False
-        self._cumulative_reward = 0.01
+        self._cumulative_reward = 0.0
         return self.get_observation()
 
     def _compute_queue_summary(self) -> QueueSummary:

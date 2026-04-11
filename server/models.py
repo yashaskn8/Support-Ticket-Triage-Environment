@@ -204,7 +204,7 @@ class TicketReward(BaseModel):
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    value: float = Field(..., gt=0.01, lt=0.99, description="Overall reward score strictly between 0.01 and 0.99")
+    value: float = Field(..., gt=0.0, lt=1.0, description="Overall reward score strictly between 0.0 and 1.0")
     breakdown: Dict[str, Any] = Field(
         default_factory=dict,
         description="Named sub-scores and dynamic targets that contribute to the total value",
@@ -229,7 +229,7 @@ class EnvironmentState(BaseModel):
     )
     total_tickets: int = Field(..., gt=0, description="Total number of tickets in the episode")
     cumulative_reward: float = Field(
-        default=0.01, description="Sum of all rewards received so far"
+        default=0.0, description="Sum of all rewards received so far"
     )
     step_number: int = Field(default=0, ge=0, description="Current step number")
     done: bool = Field(default=False, description="Whether the episode is complete")
@@ -239,18 +239,18 @@ class EnvironmentState(BaseModel):
 
     # Episode analytics fields
     mean_reward_so_far: float = Field(
-        default=0.01,
+        default=0.0,
         description=(
             "Mean reward per step across all completed steps in "
-            "this episode. 0.01 if no steps taken yet."
+            "this episode. 0.0 if no steps taken yet."
         ),
     )
     min_reward_this_episode: float = Field(
-        default=0.01,
+        default=0.0,
         description="Minimum per-step reward seen in this episode.",
     )
     max_reward_this_episode: float = Field(
-        default=0.01,
+        default=0.0,
         description="Maximum per-step reward seen in this episode.",
     )
     penalties_applied_total: int = Field(

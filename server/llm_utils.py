@@ -773,7 +773,7 @@ def main() -> None:
     for r in results:
         tid = r["task_id"]
         if has_baseline and tid in baseline_tasks:
-            bl_score = baseline_tasks[tid].get("mean_score", 0.01)
+            bl_score = baseline_tasks[tid].get("mean_score", 0.0)
             delta = r["score"] - bl_score
             delta_str = f"{delta:+.3f}"
             bl_str = f"{bl_score:.3f}"
@@ -785,9 +785,9 @@ def main() -> None:
             f"{delta_str:<6}| {str(r['success']).lower()}"
         )
     _log_stderr(f"{'-'*14}|{'-'*6}|{'-'*7}|{'-'*9}|{'-'*7}|{'-'*8}")
-    overall_mean = sum(r["score"] for r in results) / len(results) if results else 0.01
+    overall_mean = sum(r["score"] for r in results) / len(results) if results else 0.0
     if has_baseline:
-        bl_overall = baseline.get("overall_mean", 0.01)
+        bl_overall = baseline.get("overall_mean", 0.0)
         overall_delta = f"{overall_mean - bl_overall:+.3f}"
         bl_overall_str = f"{bl_overall:.3f}"
     else:

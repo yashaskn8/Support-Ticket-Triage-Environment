@@ -6,13 +6,13 @@ using exact match, super-category match with evidence-scaled modifiers, and
 a minimal signal floor for mismatches.
 
 Scoring logic:
-  1. EXACT MATCH (predicted == ground_truth): score = 0.99
+  1. EXACT MATCH (predicted == ground_truth): score = 1.0
   2. SUPER-CATEGORY MATCH: score = [0.40, 0.65] (evidence-scaled)
      Super-groups:
        FINANCIAL = {BILLING, ACCOUNT, SHIPPING}
        TECHNICAL = {TECHNICAL}
        GENERAL   = {GENERAL}
-  3. NO MATCH: score = [0.01, 0.15] (evidence-scaled)
+  3. NO MATCH: score = [0.0, 0.15] (evidence-scaled)
 
 Architecture guarantee: This grader never imports from or accesses the data
 generator — all scoring is derived purely from input text.
@@ -25,7 +25,7 @@ from typing import Any, Dict, Optional
 def _clamp_score(score: float) -> float:
     """
     Clamp score to open interval (0, 1) strictly.
-    The validator rejects 0.01 and 0.99 exactly.
+    The validator rejects 0.0 and 1.0 exactly.
     Minimum representable score: 0.001
     Maximum representable score: 0.999
     """
@@ -42,8 +42,8 @@ from server.models import ClassifyAction, TicketReward
 # ── Incentive ordering guarantee ─────────────────────────────────────────────
 # Verified on every import of this module. If this assertion fails, the
 # scoring tiers have been misconfigured and the incentive structure is broken.
-assert 0.99 > 0.65 > 0.15, (
-    "Incentive ordering violated: exact_match (0.99) > super_cat_max (0.65) > no_match_max (0.15)"
+assert 1.0 > 0.65 > 0.15, (
+    "Incentive ordering violated: exact_match (1.0) > super_cat_max (0.65) > no_match_max (0.15)"
 )
 
 
@@ -131,7 +131,7 @@ def _compute_category_scores(ticket: Dict[str, Any]) -> Dict[str, float]:
 
     scores: Dict[str, float] = {}
     for cat, keywords in KEYWORD_CLUSTERS.items():
-        total = 0.01
+        total = 0.0
         unique_matches = 0
         for kw in keywords:
             subj_count = subject.count(kw)
@@ -139,10 +139,10 @@ def _compute_category_scores(ticket: Dict[str, Any]) -> Dict[str, float]:
             if subj_count > 0 or body_count > 0:
                 unique_matches += 1
                 # Cap individual keyword influence to prevent single-keyword dominance
-                kw_score = min(subj_count * 2.0, 4.0) + min(body_count * 0.99, 3.0)
+                kw_score = min(subj_count * 2.0, 4.0) + min(body_count * 1.0, 3.0)
                 total += kw_score
         # Multi-signal voting: reward having diverse signals
-        scores[cat] = total * (0.99 + (unique_matches * 0.2))
+        scores[cat] = total * (1.0 + (unique_matches * 0.2))
 
     return scores
 
@@ -193,25 +193,25 @@ def _compute_evidence_score(ticket_text: str, category: str) -> float:
         category: The predicted category to compute evidence for.
 
     Returns:
-        Float between 0.01 and 0.99 representing keyword density.
+        Float between 0.0 and 1.0 representing keyword density.
     """
     if not ticket_text or category not in _EVIDENCE_KEYWORDS:
-        return _clamp_score(0.01)
+        return _clamp_score(0.0)
 
     keywords = _EVIDENCE_KEYWORDS[category]
     if not keywords:
-        return _clamp_score(0.01)
+        return _clamp_score(0.0)
 
     text_lower = ticket_text.lower()
     found_keywords = sum(1 for kw in keywords if kw in text_lower)
     total_keywords = len(keywords)
     
-    # Add a smoothing factor of 0.99 to prevent evidence from being exactly 0.01
+    # Add a smoothing factor of 1.0 to prevent evidence from being exactly 0.0
     # when text is present but no keywords match. This satisfies the continuous
     # reward band invariant for super-category math, guaranteeing the score
     # falls strictly inside the (0.41, 0.64) range.
-    smoothed_kw = found_keywords + 0.99
-    evidence = min(0.99, smoothed_kw / total_keywords)
+    smoothed_kw = found_keywords + 1.0
+    evidence = min(1.0, smoothed_kw / total_keywords)
     return _clamp_score(evidence)
 
 
@@ -224,11 +224,11 @@ def grade_classify(
     Grade a classify action with a continuous reward signal.
 
     Scoring tiers:
-      Exact match:           base = 0.99
+      Exact match:           base = 1.0
       Super-category match:  base = 0.50, final = 0.50 + (0.15 * evidence)
                              Range: [0.50, 0.65]
-      No match:              base = 0.01, final = 0.15 * evidence
-                             Range: [0.01, 0.15]
+      No match:              base = 0.0, final = 0.15 * evidence
+                             Range: [0.0, 0.15]
 
     Args:
         action: The agent's classification action, or None if parsing failed.
@@ -242,9 +242,9 @@ def grade_classify(
         return TicketReward(
             value=_clamp_score(0.01),
             breakdown={
-                "exact_match": 0.01,
-                "super_category_match": 0.01,
-                "evidence_score": 0.01,
+                "exact_match": 0.0,
+                "super_category_match": 0.0,
+                "evidence_score": 0.0,
                 "final_score": 0.01,
                 "target_category": "",
             },
@@ -255,15 +255,15 @@ def grade_classify(
     predicted = action.category
 
     # Compute evidence for the predicted category
-    evidence = _compute_evidence_score(ticket_text, predicted) if ticket_text else 0.01
+    evidence = _compute_evidence_score(ticket_text, predicted) if ticket_text else 0.0
 
     if predicted == expected:
         # Exact match — always 0.99, no modifier needed
         return TicketReward(
             value=_clamp_score(0.99),
             breakdown={
-                "exact_match": 0.99,
-                "super_category_match": 0.99,
+                "exact_match": 1.0,
+                "super_category_match": 1.0,
                 "evidence_score": round(evidence, 4),
                 "final_score": 0.99,
                 "target_category": expected,
@@ -284,8 +284,8 @@ def grade_classify(
         return TicketReward(
             value=final,
             breakdown={
-                "exact_match": 0.01,
-                "super_category_match": 0.99,
+                "exact_match": 0.0,
+                "super_category_match": 1.0,
                 "evidence_score": round(evidence, 4),
                 "final_score": final,
                 "target_category": expected,
@@ -302,8 +302,8 @@ def grade_classify(
     return TicketReward(
         value=final,
         breakdown={
-            "exact_match": 0.01,
-            "super_category_match": 0.01,
+            "exact_match": 0.0,
+            "super_category_match": 0.0,
             "evidence_score": round(evidence, 4),
             "final_score": final,
             "target_category": expected,

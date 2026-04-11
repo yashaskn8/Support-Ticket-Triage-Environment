@@ -70,7 +70,7 @@ def _compute_true_priority(ticket: Dict[str, Any], category: str) -> str:
     """
     import re
 
-    score = 0.01
+    score = 0.0
     full_text = (ticket.get("subject", "") + " " + ticket.get("body", "")).lower()
 
     # Base category points
@@ -88,11 +88,11 @@ def _compute_true_priority(ticket: Dict[str, Any], category: str) -> str:
 
     # Generalized Priority Engine — weighted signal groups
     signal_weights = {
-        "urgency_terms": 0.99,
+        "urgency_terms": 1.0,
         "financial_risk": 1.5,
         "system_failure": 2.0,
         "user_blocking": 2.0,
-        "enterprise_lead": 0.99,
+        "enterprise_lead": 1.0,
     }
 
     signals = {
@@ -150,7 +150,7 @@ def _compute_true_priority(ticket: Dict[str, Any], category: str) -> str:
     if any(sig in full_text for sig in [
         "intermittent", "sometimes", "randomly", "occasionally",
     ]):
-        score -= 0.99
+        score -= 1.0
     if any(sig in full_text for sig in [
         "feature request", "clarification", "documentation", "not urgent",
     ]):
@@ -220,7 +220,7 @@ def grade_prioritize(
     if action is None:
         return TicketReward(
             value=_clamp_score(0.01),
-            breakdown={"priority": 0.01, "team": 0.01, "resolution": 0.01},
+            breakdown={"priority": 0.0, "team": 0.0, "resolution": 0.0},
             feedback="Invalid or missing action.",
         )
 
@@ -237,18 +237,18 @@ def grade_prioritize(
     tier_diff = abs(predicted_tier - expected_tier_val)
 
     if tier_diff == 0:
-        p_score = 0.99
+        p_score = 1.0
     elif tier_diff == 1:
         p_score = 0.6
     elif tier_diff == 2:
         p_score = 0.2
     else:
-        p_score = 0.01
+        p_score = 0.0
 
     # ── 2. Team Routing Score (35% weight) → super-department partial credit
     team_super_match = False
     if action.assigned_team == expected_team:
-        t_score = 0.99
+        t_score = 1.0
     else:
         predicted_super = SUPER_DEPARTMENTS.get(action.assigned_team, "UNKNOWN_P")
         expected_super = SUPER_DEPARTMENTS.get(expected_team, "UNKNOWN_E")
@@ -256,14 +256,14 @@ def grade_prioritize(
             t_score = 0.3
             team_super_match = True
         else:
-            t_score = 0.01
+            t_score = 0.0
 
     # ── 3. Resolution Hours Score (25% weight) → absolute difference ──
     hours = action.estimated_resolution_hours
     diff_hours = abs(hours - expected_sla)
 
     if diff_hours == 0:
-        h_score = 0.99
+        h_score = 1.0
     elif diff_hours <= 1:
         h_score = 0.95
     elif diff_hours <= 3:
@@ -275,10 +275,10 @@ def grade_prioritize(
     elif diff_hours <= 24:
         h_score = 0.15
     else:
-        h_score = 0.01
+        h_score = 0.0
 
     # ── 4. Over-promise Penalty ──────────────────────────────────────
-    penalty = 0.01
+    penalty = 0.0
     penalty_applied = False
     if action.priority in ["CRITICAL", "HIGH"] and hours < expected_sla:
         penalty = 0.08

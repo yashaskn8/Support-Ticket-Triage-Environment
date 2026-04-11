@@ -92,7 +92,7 @@ class SupportTriageEnv:
 
         # Global penalty tracking
         self._last_action_json: str | None = None
-        self._cumulative_reward = 0.01
+        self._cumulative_reward = 0.0
 
         # Trajectory tracking for episode analytics and trajectory bonus
         self._step_rewards: List[float] = []
@@ -114,7 +114,7 @@ class SupportTriageEnv:
         with self._state_lock:
             self.episode_id = str(uuid.uuid4())
             self._task._episode_id = self.episode_id
-            self._cumulative_reward = 0.01
+            self._cumulative_reward = 0.0
             self._last_action_json = None
             self._step_rewards = []
             self._penalties_count = 0
@@ -144,8 +144,8 @@ class SupportTriageEnv:
           should improve its scores over time.
 
         Criterion 2 — No catastrophic steps:
-          If zero steps received a reward of 0.01 exactly
-          (before clamping, i.e., the raw grader output was 0.01):
+          If zero steps received a reward of 0.0 exactly
+          (before clamping, i.e., the raw grader output was 0.0):
           bonus += 0.025
           Rationale: a consistent agent avoids complete failures.
 
@@ -164,14 +164,14 @@ class SupportTriageEnv:
         No external calls. Executes in under 1ms.
 
         Returns:
-            Float in [0.01, 0.10] representing the trajectory bonus.
-            Returns 0.01 if fewer than 3 steps have been taken
+            Float in [0.0, 0.10] representing the trajectory bonus.
+            Returns 0.0 if fewer than 3 steps have been taken
             (insufficient data for trajectory analysis).
         """
         if len(self._step_rewards) < 3:
-            return 0.01
+            return 0.0
 
-        bonus = 0.01
+        bonus = 0.0
         n = len(self._step_rewards)
         rewards = self._step_rewards
 
@@ -188,7 +188,7 @@ class SupportTriageEnv:
             
             if den_s > 0 and den_r > 0:
                 correlation = num / (den_s * den_r)
-                correlation = max(-0.99, min(0.99, correlation))
+                correlation = max(-1.0, min(1.0, correlation))
                 
                 # Monotonic trend penalty: deduct points for each step-over-step reversal
                 reversals = sum(1 for i in range(1, n) if rewards[i] < rewards[i-1] - 0.05)
@@ -202,7 +202,7 @@ class SupportTriageEnv:
             pass
 
         # Criterion 2: no catastrophic steps
-        criterion_2 = not any(r == 0.01 for r in rewards)
+        criterion_2 = not any(r == 0.0 for r in rewards)
         if criterion_2:
             bonus += 0.025
 
@@ -232,7 +232,7 @@ class SupportTriageEnv:
 
         Applies trajectory consistency bonus on the final step (done=True).
 
-        If the action fails Pydantic validation, returns reward=0.01
+        If the action fails Pydantic validation, returns reward=0.0
         with the error message in info. Never raises exceptions.
 
         Args:
@@ -362,12 +362,12 @@ class SupportTriageEnv:
                             den_r = sum((r - mean_r) ** 2 for r in rewards) ** 0.5
                             if den_s > 0 and den_r > 0:
                                 _corr = num / (den_s * den_r)
-                                _corr = max(-0.99, min(0.99, _corr))
+                                _corr = max(-1.0, min(1.0, _corr))
                                 trajectory_bonus_info["monotonic_improvement"] = _corr > 0.3
                                 trajectory_bonus_info["pearson_correlation"] = round(_corr, 6)
                         except Exception: pass
 
-                        trajectory_bonus_info["no_catastrophic_steps"] = not any(r == 0.01 for r in rewards)
+                        trajectory_bonus_info["no_catastrophic_steps"] = not any(r == 0.0 for r in rewards)
                         try:
                             import statistics
                             trajectory_bonus_info["low_variance"] = statistics.stdev(rewards) < 0.25
@@ -375,12 +375,12 @@ class SupportTriageEnv:
                         trajectory_bonus_info["above_baseline_mean"] = (sum(rewards) / n) > 0.50
 
                     if trajectory_bonus > 0:
-                        # Ensure bonus doesn't push us to 0.99 (clamping to 0.90)
+                        # Ensure bonus doesn't push us to 1.0 (clamping to 0.90)
                         final_reward = min(0.90, final_reward + trajectory_bonus)
                         self._step_rewards[-1] = final_reward
                         info["trajectory_bonus"] = trajectory_bonus
                     else:
-                        info["trajectory_bonus"] = 0.01
+                        info["trajectory_bonus"] = 0.0
                     
                     info["trajectory_bonus_breakdown"] = trajectory_bonus_info
 
@@ -391,7 +391,7 @@ class SupportTriageEnv:
                 # Each component is independently computed, never reverse-engineered.
                 # Evaluators can verify: final = clamp(grader - penalties + bonus)
                 _penalty_sum = sum(0.10 for _ in penalties)
-                _bonus_applied = info.get("trajectory_bonus", 0.01) if done else 0.01
+                _bonus_applied = info.get("trajectory_bonus", 0.0) if done else 0.0
                 info["reward_components"] = {
                     "grader_raw_score": round(_grader_raw_score, 4),
                     "penalty_total": round(_penalty_sum, 4),
@@ -443,7 +443,7 @@ class SupportTriageEnv:
                 task_id=self.task_id,
                 current_ticket_index=0,
                 total_tickets=1,
-                cumulative_reward=0.01,
+                cumulative_reward=0.0,
                 step_number=0,
                 done=False,
                 episode_id=self.episode_id,

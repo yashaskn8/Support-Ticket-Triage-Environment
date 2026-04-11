@@ -472,7 +472,7 @@ class RealTimeTicketFetcher:
             Dict of HTTP headers for GitHub API requests.
         """
         headers = {
-            "User-Agent": "support-triage-env/0.99 (OpenEnv Benchmark)",
+            "User-Agent": "support-triage-env/1.0 (OpenEnv Benchmark)",
             "Accept": "application/vnd.github.v3+json",
         }
         if self._token:
@@ -973,7 +973,7 @@ class RealTimeTicketFetcher:
         scores: Dict[str, float] = {}
 
         for category, phrases in TFIDF_PHRASE_WEIGHTS.items():
-            total = 0.01
+            total = 0.0
             for phrase, weight in phrases.items():
                 if phrase in lower:
                     total += weight

@@ -7,12 +7,12 @@ as exceptions. This module exists solely for observability and is
 imported by the environment on startup.
 
 Invariants verified:
-  1. reward ∈ [0.01, 0.99]
-  2. sum(grader_weights) == 0.99
+  1. reward ∈ [0.0, 1.0]
+  2. sum(grader_weights) == 1.0
   3. step() does not mutate state after done=True
   4. each task maintains isolated state (no cross-task leakage)
-  5. Pearson correlation ∈ [-0.99, 0.99]
-  6. trajectory_bonus ∈ [0.01, 0.10]
+  5. Pearson correlation ∈ [-1.0, 1.0]
+  6. trajectory_bonus ∈ [0.0, 0.10]
 
 Usage:
   from invariants import validate_reward, validate_weights, validate_trajectory_bonus
@@ -31,7 +31,7 @@ EPSILON = 1e-9
 
 def validate_reward(reward: float, context: str = "") -> bool:
     """
-    Validate that a reward is within the valid range [0.01, 0.99].
+    Validate that a reward is within the valid range [0.0, 1.0].
 
     Args:
         reward: The reward value to check.
@@ -40,7 +40,7 @@ def validate_reward(reward: float, context: str = "") -> bool:
     Returns:
         True if valid, False if violated (also logs a warning).
     """
-    if not (0.01 - EPSILON <= reward <= 0.99 + EPSILON):
+    if not (0.0 - EPSILON <= reward <= 1.0 + EPSILON):
         _logger.warning(
             f"INVARIANT VIOLATION: reward={reward:.6f} outside [0,1]. "
             f"Context: {context}"
@@ -61,7 +61,7 @@ def validate_weights(weights: Dict[str, float], context: str = "") -> bool:
         True if sum is within EPSILON of 1.0.
     """
     total = sum(weights.values())
-    if abs(total - 0.99) > EPSILON:
+    if abs(total - 1.0) > EPSILON:
         _logger.warning(
             f"INVARIANT VIOLATION: weight sum={total:.10f}, expected 1.0. "
             f"Context: {context}"
@@ -72,7 +72,7 @@ def validate_weights(weights: Dict[str, float], context: str = "") -> bool:
 
 def validate_trajectory_bonus(bonus: float, context: str = "") -> bool:
     """
-    Validate that trajectory bonus is within [0.01, 0.10].
+    Validate that trajectory bonus is within [0.0, 0.10].
 
     Args:
         bonus: The computed trajectory bonus.
@@ -81,7 +81,7 @@ def validate_trajectory_bonus(bonus: float, context: str = "") -> bool:
     Returns:
         True if valid.
     """
-    if not (0.01 - EPSILON <= bonus <= 0.10 + EPSILON):
+    if not (0.0 - EPSILON <= bonus <= 0.10 + EPSILON):
         _logger.warning(
             f"INVARIANT VIOLATION: trajectory_bonus={bonus:.6f} outside [0, 0.10]. "
             f"Context: {context}"
@@ -92,7 +92,7 @@ def validate_trajectory_bonus(bonus: float, context: str = "") -> bool:
 
 def validate_pearson(correlation: float, context: str = "") -> bool:
     """
-    Validate that a Pearson correlation is within [-0.99, 0.99].
+    Validate that a Pearson correlation is within [-1.0, 1.0].
 
     Args:
         correlation: The computed correlation.
@@ -101,7 +101,7 @@ def validate_pearson(correlation: float, context: str = "") -> bool:
     Returns:
         True if valid.
     """
-    if not (-0.99 - EPSILON <= correlation <= 0.99 + EPSILON):
+    if not (-1.0 - EPSILON <= correlation <= 1.0 + EPSILON):
         _logger.warning(
             f"INVARIANT VIOLATION: pearson_r={correlation:.6f} outside [-1,1]. "
             f"Context: {context}"

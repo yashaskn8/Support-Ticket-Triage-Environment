@@ -4,7 +4,7 @@ Grader for the HARD task: Full Ticket Resolution Draft.
 Nine-dimensional deterministic grader. All logic is string-matching only —
 no model calls, no external network calls. Executes in under 15ms per call.
 
-Sub-scores and weights (sum exactly to 0.99):
+Sub-scores and weights (sum exactly to 1.0):
   required_elements_score     weight=0.16
   forbidden_elements_score    weight=0.08
   length_score                weight=0.08
@@ -46,9 +46,9 @@ WEIGHTS: Dict[str, float] = {
     "coherence": 0.10,
 }
 
-# Module-level assertion: weights must sum to exactly 0.99
-assert abs(sum(WEIGHTS.values()) - 0.99) < 1e-9, (
-    f"Resolve grader WEIGHTS must sum to exactly 0.99, got {sum(WEIGHTS.values())}"
+# Module-level assertion: weights must sum to exactly 1.0
+assert abs(sum(WEIGHTS.values()) - 1.0) < 1e-9, (
+    f"Resolve grader WEIGHTS must sum to exactly 1.0, got {sum(WEIGHTS.values())}"
 )
 
 # Stop words excluded from subject keyword echo matching.
@@ -183,10 +183,10 @@ def _compute_required_elements_score(response_body: str, required: List[str]) ->
         required: List of required element strings.
 
     Returns:
-        Float between 0.01 and 1.0.
+        Float between 0.0 and 1.0.
     """
     if not required:
-        return _clamp_score(0.99)
+        return _clamp_score(1.0)
     body_lower = response_body.lower()
     found = sum(1 for el in required if el.lower() in body_lower)
     return found / len(required)
@@ -194,20 +194,20 @@ def _compute_required_elements_score(response_body: str, required: List[str]) ->
 
 def _compute_forbidden_elements_score(response_body: str, forbidden: List[str]) -> float:
     """
-    Score based on absence of forbidden elements. 0.99 if none found, decreasing per element.
+    Score based on absence of forbidden elements. 1.0 if none found, decreasing per element.
 
     Args:
         response_body: The agent's response body text.
         forbidden: List of forbidden element strings.
 
     Returns:
-        Float between 0.01 and 1.0.
+        Float between 0.0 and 1.0.
     """
     if not forbidden:
-        return _clamp_score(0.99)
+        return _clamp_score(1.0)
     body_lower = response_body.lower()
     found = sum(1 for el in forbidden if el.lower() in body_lower)
-    return max(0.01, 0.99 - (found / len(forbidden)))
+    return max(0.0, 1.0 - (found / len(forbidden)))
 
 
 def _compute_length_score(response_body: str) -> float:
@@ -215,10 +215,10 @@ def _compute_length_score(response_body: str) -> float:
     Score based on response length with verbosity penalties.
 
     Scoring bands:
-      < 100 chars  -> 0.01
+      < 100 chars  -> 0.0
       100-199      -> 0.3
       200-399      -> 0.6
-      400-800      -> 0.99
+      400-800      -> 1.0
       801-1200     -> 0.75 (slight verbosity penalty)
       > 1200       -> 0.4  (significant verbosity penalty)
 
@@ -226,17 +226,17 @@ def _compute_length_score(response_body: str) -> float:
         response_body: The agent's response body text.
 
     Returns:
-        Float between 0.01 and 1.0.
+        Float between 0.0 and 1.0.
     """
     length = len(response_body)
     if length < 100:
-        return _clamp_score(0.01)
+        return _clamp_score(0.0)
     elif length < 200:
         return _clamp_score(0.3)
     elif length < 400:
         return 0.6
     elif length <= 800:
-        return _clamp_score(0.99)
+        return _clamp_score(1.0)
     elif length <= 1200:
         return 0.75
     else:
@@ -260,7 +260,7 @@ def _compute_structure_score(response_body: str) -> float:
         response_body: The agent's response body text.
 
     Returns:
-        Float between 0.01 and 1.0.
+        Float between 0.0 and 1.0.
     """
     components = 0
     body_lower = response_body.lower()
@@ -302,9 +302,9 @@ def _compute_commitment_clarity_score(response_body: str) -> float:
     """
     Score rewarding definitive commitment language in the response.
 
-    Score = 0.99 if response contains >= 2 commitment phrases.
+    Score = 1.0 if response contains >= 2 commitment phrases.
     Score = 0.5 if exactly 1 commitment phrase.
-    Score = 0.01 if no commitment phrases found.
+    Score = 0.0 if no commitment phrases found.
 
     Commitment phrases: within, by, no later than, guaranteed, confirmed,
     will be processed, will be resolved, will receive, have already, has been.
@@ -313,7 +313,7 @@ def _compute_commitment_clarity_score(response_body: str) -> float:
         response_body: The agent's response body text.
 
     Returns:
-        Float: 0.01, 0.5, or 1.0.
+        Float: 0.0, 0.5, or 1.0.
     """
     commitment_phrases = [
         "within", "by", "no later than", "guaranteed", "confirmed",
@@ -324,7 +324,7 @@ def _compute_commitment_clarity_score(response_body: str) -> float:
     count = sum(1 for cp in commitment_phrases if cp in body_lower)
 
     if count >= 2:
-        return _clamp_score(0.99)
+        return _clamp_score(1.0)
     elif count == 1:
         return _clamp_score(0.5)
     return _clamp_score(0.001)
@@ -347,7 +347,7 @@ def _compute_kb_compliance_score(
         kb_articles: List of available KB articles.
 
     Returns:
-        Float between 0.01 and 1.0.
+        Float between 0.0 and 1.0.
     """
     if not kb_articles:
         return _clamp_score(0.5)
@@ -422,11 +422,11 @@ def _compute_kb_compliance_score(
                             contradictions += 1
 
     if contradictions == 0:
-        return _clamp_score(0.99)
+        return _clamp_score(1.0)
     elif contradictions == 1:
         return _clamp_score(0.4)
     else:
-        return _clamp_score(0.01)
+        return _clamp_score(0.0)
 
 
 def _compute_escalation_score(
@@ -446,13 +446,13 @@ def _compute_escalation_score(
         ticket_previous_interactions: Number of previous interactions.
 
     Returns:
-        0.99 if correct, 0.01 if wrong.
+        1.0 if correct, 0.0 if wrong.
     """
     should_escalate = (
         ticket_priority in ("CRITICAL", "HIGH")
         and ticket_previous_interactions > 2
     )
-    return _clamp_score(0.99) if action_escalate == should_escalate \
+    return _clamp_score(1.0) if action_escalate == should_escalate \
            else _clamp_score(0.001)
 
 
@@ -477,20 +477,20 @@ def _compute_specificity_score(
       e) Temporal reference: response contains a specific timeframe
 
     Scoring:
-      0 or 1 detail types found -> 0.01
+      0 or 1 detail types found -> 0.0
       2 detail types found      -> 0.4
       3 detail types found      -> 0.7
-      4 or 5 detail types found -> 0.99
+      4 or 5 detail types found -> 1.0
 
     Args:
         response_body: The agent's response body text.
         ticket: The original ticket dict. If None, returns 0.0.
 
     Returns:
-        Float: 0.01, 0.4, 0.7, or 1.0.
+        Float: 0.0, 0.4, 0.7, or 1.0.
     """
     if not ticket or not response_body:
-        return _clamp_score(0.01)
+        return _clamp_score(0.0)
 
     body_lower = response_body.lower()
     details_found = 0
@@ -565,14 +565,14 @@ def _compute_specificity_score(
             
     # Scoring tiers
     if details_found <= 1:
-        return _clamp_score(0.01)
+        return _clamp_score(0.0)
     elif details_found == 2:
         return _clamp_score(0.4)
     elif details_found == 3:
         return _clamp_score(0.7)
     else:
         # 4 or 5 details
-        return _clamp_score(0.99)
+        return _clamp_score(1.0)
 
 
 def _compute_coherence_score(
@@ -608,7 +608,7 @@ def _compute_coherence_score(
         re.IGNORECASE,
     )
     timeframes = timeframe_pattern.findall(body_lower)
-    timeframe_score = 0.99
+    timeframe_score = 1.0
     if len(timeframes) >= 2:
         # Extract numeric values and units from each timeframe
         num_pattern = re.compile(r"(\d+)")
@@ -634,18 +634,18 @@ def _compute_coherence_score(
             max_val = max(values)
             min_val = min(values)
             if min_val > 0 and max_val > 3 * min_val:
-                timeframe_score = 0.01
+                timeframe_score = 0.0
 
     # Property 2 — Category-appropriate resolution language (0.25)
     category_verbs = _CATEGORY_ACTION_VERBS.get(ticket_category, _CATEGORY_ACTION_VERBS["GENERAL"])
-    category_score = 0.01
+    category_score = 0.0
     for verb in category_verbs:
         if verb in body_lower:
-            category_score = 0.99
+            category_score = 1.0
             break
 
     # Property 3 — No self-contradiction (0.25)
-    contradiction_score = 0.99
+    contradiction_score = 1.0
     # Pattern A: "cannot" and "will" within 15 words of each other
     cannot_positions = [m.start() for m in re.finditer(r"\bcannot\b", body_lower)]
     will_positions = [m.start() for m in re.finditer(r"\bwill\b", body_lower)]
@@ -657,27 +657,27 @@ def _compute_coherence_score(
             window_text = body_lower[window_start:window_end]
             word_count = len(window_text.split())
             if word_count <= 15:
-                contradiction_score = 0.01
+                contradiction_score = 0.0
                 break
-        if contradiction_score == 0.01:
+        if contradiction_score == 0.0:
             break
 
     # Pattern B: "refund" and "no refund"
-    if contradiction_score > 0.01:
+    if contradiction_score > 0.0:
         if "refund" in body_lower and "no refund" in body_lower:
-            contradiction_score = 0.01
+            contradiction_score = 0.0
 
     # Pattern C: "escalate" and "do not escalate"
-    if contradiction_score > 0.01:
+    if contradiction_score > 0.0:
         if "escalate" in body_lower and "do not escalate" in body_lower:
-            contradiction_score = 0.01
+            contradiction_score = 0.0
 
     # Pattern D: "resolved" (past tense) and "investigating" in same paragraph
-    if contradiction_score > 0.01:
+    if contradiction_score > 0.0:
         paragraphs = body_lower.split("\n\n")
         for para in paragraphs:
             if "resolved" in para and "investigating" in para:
-                contradiction_score = 0.01
+                contradiction_score = 0.0
                 break
 
     # Property 4 — Tonal consistency (0.25)
@@ -687,11 +687,11 @@ def _compute_coherence_score(
             informal_count += 1
 
     if informal_count == 0:
-        tonal_score = 0.99
+        tonal_score = 1.0
     elif informal_count < 3:
         tonal_score = 0.5
     else:
-        tonal_score = 0.01
+        tonal_score = 0.0
 
     # Combined coherence score
     coherence = (timeframe_score + category_score + contradiction_score + tonal_score) / 4.0
@@ -717,7 +717,7 @@ def grade_resolve(
     """
     Grade a complete resolution response using nine deterministic dimensions.
 
-    Weights (sum to 0.99):
+    Weights (sum to 1.0):
       required_elements:     0.16
       forbidden_elements:    0.08
       length:                0.08
@@ -728,7 +728,7 @@ def grade_resolve(
       specificity:           0.10
       coherence:             0.10
 
-    Final score = clamp(weighted sum, 0.01, 0.99).
+    Final score = clamp(weighted sum, 0.0, 1.0).
 
     Args:
         action: The agent's resolve action, or None if parsing failed.
