@@ -38,7 +38,7 @@ HF_TOKEN = os.getenv("HF_TOKEN")
 # The check is performed explicitly in main() and optionally in run_episode().
 
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+API_BASE_URL = os.getenv("API_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME")
 ENV_BASE_URL = os.getenv("ENV_BASE_URL", "http://localhost:7860")
 
@@ -724,6 +724,8 @@ def main() -> None:
         raise ValueError("HF_TOKEN environment variable is required.")
     if not MODEL_NAME:
         raise ValueError("MODEL_NAME environment variable is required.")
+    if not API_BASE_URL:
+        raise ValueError("API_BASE_URL environment variable is required.")
 
     client = OpenAI(
         base_url=API_BASE_URL,

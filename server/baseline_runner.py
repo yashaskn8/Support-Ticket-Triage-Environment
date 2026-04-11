@@ -44,7 +44,9 @@ from server.llm_utils import (
 
 # ── Configuration ────────────────────────────────────────────────────────────
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+API_BASE_URL = os.getenv("API_BASE_URL")
+if not API_BASE_URL:
+    raise ValueError("API_BASE_URL environment variable is required.")
 MODEL_NAME = os.getenv("MODEL_NAME")
 if not MODEL_NAME:
     raise ValueError("MODEL_NAME environment variable is required.")

@@ -44,8 +44,8 @@ python inference.py
 | Item | Status |
 |------|--------|
 | `inference.py` at repository root | ✅ |
-| `API_BASE_URL` and `MODEL_NAME` have defaults | ✅ |
-| `HF_TOKEN` is mandatory with no default | ✅ |
+| `API_BASE_URL`, `MODEL_NAME`, and `HF_TOKEN` are mandatory | ✅ |
+| No hardcoded fallback values in inference | ✅ |
 | OpenAI client uses `api_key=HF_TOKEN` directly | ✅ |
 | stdout contains only `[START]`, `[STEP]`, `[END]` | ✅ |
 | `[END]` line contains zero `score=` fields | ✅ |
@@ -190,8 +190,8 @@ python inference.py
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `API_BASE_URL` | Yes | `https://router.huggingface.co/v1` | LLM endpoint |
-| `MODEL_NAME` | Yes | `Qwen/Qwen2.5-72B-Instruct` | Model identifier |
+| `API_BASE_URL` | **Mandatory** | *(no default — required)* | LLM endpoint |
+| `MODEL_NAME` | **Mandatory** | *(no default — required)* | Model identifier |
 | `HF_TOKEN` | **Mandatory** | *(no default — required)* | HuggingFace token |
 | `GITHUB_TOKEN` | No | — | Raises API rate limit to 5,000/hr |
 
