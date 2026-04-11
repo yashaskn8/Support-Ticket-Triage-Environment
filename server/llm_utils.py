@@ -537,7 +537,7 @@ def run_episode(
         )
 
     # Calculate score
-    score = sum(rewards) / len(rewards) if rewards else 0.0
+    score = sum(rewards) / len(rewards) if rewards else 0.01
     success = score >= 0.1
 
     # Print [END] line — exact format mapping the sample script

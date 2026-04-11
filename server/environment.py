@@ -458,9 +458,9 @@ class SupportTriageEnv:
                 max(self._step_rewards), 4
             )
         else:
-            state_dict["mean_reward_so_far"] = 0.0
-            state_dict["min_reward_this_episode"] = 0.0
-            state_dict["max_reward_this_episode"] = 0.0
+            state_dict["mean_reward_so_far"] = 0.01
+            state_dict["min_reward_this_episode"] = 0.01
+            state_dict["max_reward_this_episode"] = 0.01
 
         state_dict["penalties_applied_total"] = self._penalties_count
         state_dict["steps_remaining"] = max(

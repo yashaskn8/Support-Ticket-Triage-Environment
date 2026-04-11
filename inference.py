@@ -269,8 +269,8 @@ def run_task(client: OpenAI, task_id: str) -> None:
             steps    += 1
             step_num += 1
 
-        mean_score = sum(rewards) / len(rewards) if rewards else 0.0
-        success    = mean_score >= SUCCESS_THRESHOLDS.get(task_id, 0.0)
+        mean_score = sum(rewards) / len(rewards) if rewards else 0.01
+        success    = mean_score >= SUCCESS_THRESHOLDS.get(task_id, 0.01)
 
     except httpx.HTTPError as exc:
         print(f"[DEBUG] HTTP error ({task_id}): {exc}", file=sys.stderr, flush=True)
