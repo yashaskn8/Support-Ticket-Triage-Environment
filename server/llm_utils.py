@@ -432,7 +432,7 @@ def run_episode(
             f"[END] success=false steps=0 rewards=0.01",
             flush=True,
         )
-        return {"task_id": task_id, "steps": 0, "score": 0.0, "rewards": [], "success": False}
+        return {"task_id": task_id, "steps": 0, "score": 0.10, "rewards": [], "success": False}
     except Exception as e:
         error_msg = f"Reset failed: {str(e)[:200]}"
         _log_stderr(error_msg)
@@ -444,7 +444,7 @@ def run_episode(
             f"[END] success=false steps=0 rewards=0.01",
             flush=True,
         )
-        return {"task_id": task_id, "steps": 0, "score": 0.0, "rewards": [], "success": False}
+        return {"task_id": task_id, "steps": 0, "score": 0.10, "rewards": [], "success": False}
 
     rewards: List[float] = []
     step_num = 0
