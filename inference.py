@@ -137,7 +137,7 @@ def log_start(task: str, model: str) -> None:
 
 
 def log_step(step: int, action, reward: float, done: bool, error=None) -> None:
-    """[STEP] step=<n> action=<json> reward=<0.00> done=<true|false> error=<null|msg>"""
+    """[STEP] step=<n> action=<json> reward=<0.01> done=<true|false> error=<null|msg>"""
     action_str = json.dumps(action) if isinstance(action, dict) else str(action)
     print(
         f"[STEP] step={step} action={action_str} "
