@@ -21,7 +21,13 @@ import httpx
 from openai import OpenAI
 
 def _clamp_score(score: float) -> float:
-    return max(0.001, min(0.999, float(score)))
+    try:
+        val = float(score)
+        if val != val or val == float('inf') or val == float('-inf'):
+            return 0.10
+        return max(0.011, min(0.989, val))
+    except (TypeError, ValueError):
+        return 0.10
 
 
 try:
@@ -155,10 +161,18 @@ def log_end(success: bool, steps: int, rewards: list) -> None:
     """[END] success=<true|false> steps=<n> rewards=<r1,r2,...>
     IMPORTANT: NO score= field. Its presence is a format violation.
     """
-    clamped = [_clamp_score(r) for r in rewards]
+    safe = []
+    for r in rewards:
+        v = _clamp_score(r)
+        # Ensure 3-decimal formatting cannot round to 0.000 or 1.000
+        v = max(0.0015, min(0.9985, v))
+        safe.append(v)
+    if not safe:
+        safe = [0.10]
+    rewards_str = ','.join(f'{r:.3f}' for r in safe)
     print(
         f"[END] success={str(success).lower()} steps={steps} "
-        f"rewards={','.join(f'{r:.3f}' for r in clamped) if clamped else '0.100'}",
+        f"rewards={rewards_str}",
         flush=True,
     )
 
@@ -263,22 +277,34 @@ def run_task(client: OpenAI, task_id: str) -> None:
             action = (build_action(task_id, llm_text) if llm_text
                       else _get_default_action(task_id, observation))
 
-            step_resp = httpx.post(f"{ENV_BASE_URL}/step",
-                                   json={"task_id": task_id, "action": action},
-                                   timeout=30.0)
-            step_resp.raise_for_status()
-            step_data   = step_resp.json()
-            reward = float(step_data.get("reward", 0.001))
-            reward = _clamp_score(max(0.10, min(0.90, reward)))
-            done        = bool(step_data.get("done", False))
-            observation = step_data.get("observation", {})
- 
-            log_step(step=step_num, action=action, reward=reward,
-                     done=done, error=step_data.get("error"))
-            rewards.append(reward)
+            try:
+                step_resp = httpx.post(f"{ENV_BASE_URL}/step",
+                                       json={"task_id": task_id, "action": action},
+                                       timeout=30.0)
+                step_resp.raise_for_status()
+                step_data   = step_resp.json()
+                reward      = float(step_data.get("reward", 0.10))
+                reward      = _clamp_score(max(0.10, min(0.90, reward)))
+                done        = bool(step_data.get("done", False))
+                observation = step_data.get("observation", {})
+                log_step(step=step_num, action=action, reward=reward,
+                         done=done, error=step_data.get("error"))
+                rewards.append(reward)
+            except Exception as exc:
+                reward = 0.10
+                done   = False
+                log_step(step=step_num, action=action, reward=reward,
+                         done=False, error=str(exc)[:200])
+                rewards.append(reward)
+                print(f"[DEBUG] Step error ({task_id}): {exc}", file=sys.stderr)
+
             steps    += 1
             step_num += 1
  
+ 
+        if not rewards:
+            rewards = [0.10]
+            steps   = max(steps, 1)
         mean_score = sum(rewards) / len(rewards) if rewards else 0.10
         success    = mean_score >= SUCCESS_THRESHOLDS.get(task_id, 0.40)
 

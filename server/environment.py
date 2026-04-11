@@ -18,7 +18,13 @@ import uuid
 from typing import Any, Dict, List
 
 def _clamp_score(score: float) -> float:
-    return max(0.001, min(0.999, float(score)))
+    try:
+        val = float(score)
+        if val != val or val == float('inf') or val == float('-inf'):
+            return 0.10
+        return max(0.011, min(0.989, val))
+    except (TypeError, ValueError):
+        return 0.10
 
 from fastapi import HTTPException
 

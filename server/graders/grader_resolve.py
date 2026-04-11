@@ -295,7 +295,7 @@ def _compute_structure_score(response_body: str) -> float:
     if any(so in body_lower for so in signoff_phrases):
         components += 1
 
-    return components / 4.0
+    return _clamp_score(components / 4.0)
 
 
 def _compute_commitment_clarity_score(response_body: str) -> float:
@@ -327,7 +327,7 @@ def _compute_commitment_clarity_score(response_body: str) -> float:
         return _clamp_score(1.0)
     elif count == 1:
         return _clamp_score(0.5)
-    return _clamp_score(0.0)
+    return _clamp_score(0.001)
 
 
 def _compute_kb_compliance_score(
@@ -452,7 +452,8 @@ def _compute_escalation_score(
         ticket_priority in ("CRITICAL", "HIGH")
         and ticket_previous_interactions > 2
     )
-    return _clamp_score(1.0) if action_escalate == should_escalate else _clamp_score(0.0)
+    return _clamp_score(1.0) if action_escalate == should_escalate \
+           else _clamp_score(0.001)
 
 
 def _compute_specificity_score(
