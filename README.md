@@ -82,7 +82,7 @@ This sequential dependency makes it a genuine multi-step decision process rather
 ## Five Key Innovations
 
 1. **Dual-Source Ground Truth Independence:** GitHub labels come from external repository maintainers with no knowledge of this project's grading logic. Synthetic labels use TF-IDF with zero vocabulary overlap with the grader. This eliminates circular evaluation entirely.
-2. **Trajectory Consistency Reward:** An episode-level bonus — the first cross-step reward signal in the OpenEnv benchmark library — evaluates four criteria: monotonic improvement (Pearson correlation > 0.3), no catastrophic steps (no 0.0 rewards), low variance (std < 0.25), and above-baseline mean (> 0.50). It discourages high-variance strategies that exploit grader edge cases.
+2. **Trajectory Consistency Reward:** An episode-level bonus — the first cross-step reward signal in the OpenEnv benchmark library — evaluates four criteria: monotonic improvement (Pearson correlation > 0.3), no catastrophic steps (no 0.01 rewards), low variance (std < 0.25), and above-baseline mean (> 0.50). It discourages high-variance strategies that exploit grader edge cases.
 3. **Nine-Dimensional Resolve Grading:** The resolve task is scored across nine independently weighted dimensions: `required_elements` (0.16), `structure` (0.16), `commitment_clarity` (0.12), `kb_compliance` (0.12), `specificity` (0.10), `coherence` (0.10), `escalation` (0.08), `forbidden_elements` (0.08), and `length` (0.08). No generic template can satisfy all nine simultaneously.
 4. **Four-Tier Real-Time Data Pipeline:** 
 
