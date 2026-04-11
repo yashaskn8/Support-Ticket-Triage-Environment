@@ -8,7 +8,7 @@ CRITICAL: stdout contains ONLY [START], [STEP], [END] lines.
 All debug output goes to stderr.
 
 Required stdout format:
-  [START] task=<task_name> env=triage_flow_env model=<MODEL_NAME>
+  [START] task=<task_name> env=support-triage-env model=<MODEL_NAME>
   [STEP] step=<n> action=<action_str> reward=<0.00> done=<true|false> error=<msg|null>
   [END] success=<true|false> steps=<n> rewards=<r1,r2,...,rn>
 """
@@ -46,7 +46,7 @@ ENV_BASE_URL = os.getenv("ENV_BASE_URL", "http://localhost:7860")
 
 # Legacy prompts preserved for backwards compatibility and testing
 LEGACY_CLASSIFY_PROMPT = (
-    "You are a world-class Customer Support AI Agent operating in the triage_flow_env. "
+    "You are a world-class Customer Support AI Agent operating in the support-triage-env. "
     "Goal: Maximize reward by tracking heuristics (keywords, severity, impact). "
     "The observation includes a queue_summary field showing remaining tickets and "
     "critical_pending count. Use this context when making decisions.\n"
@@ -57,7 +57,7 @@ LEGACY_CLASSIFY_PROMPT = (
 )
 
 LEGACY_PRIORITIZE_PROMPT = (
-    "You are a world-class Customer Support AI Agent operating in the triage_flow_env. "
+    "You are a world-class Customer Support AI Agent operating in the support-triage-env. "
     "Goal: Maximize reward by tracking heuristics.\n"
     "The observation includes a queue_summary field. If critical_pending "
     "is non-zero, treat prioritization accuracy as especially important.\n"
@@ -407,7 +407,7 @@ def run_episode(
 
     # Print [START] line — exact format, no extra spaces
     logging.info(
-        f"[START] task={task_id} env=triage_flow_env model={MODEL_NAME}",
+        f"[START] task={task_id} env=support-triage-env model={MODEL_NAME}",
         flush=True,
     )
 
