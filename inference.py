@@ -20,6 +20,10 @@ import time
 import httpx
 from openai import OpenAI
 
+def _clamp_score(score: float) -> float:
+    return max(0.001, min(0.999, float(score)))
+
+
 try:
     from server.llm_utils import (
         parse_llm_json,
@@ -139,6 +143,7 @@ def log_start(task: str, model: str) -> None:
 def log_step(step: int, action, reward: float, done: bool, error=None) -> None:
     """[STEP] step=<n> action=<json> reward=<0.01> done=<true|false> error=<null|msg>"""
     action_str = json.dumps(action) if isinstance(action, dict) else str(action)
+    reward = _clamp_score(reward)
     print(
         f"[STEP] step={step} action={action_str} "
         f"reward={reward:.2f} done={'true' if done else 'false'} "
@@ -150,9 +155,10 @@ def log_end(success: bool, steps: int, rewards: list) -> None:
     """[END] success=<true|false> steps=<n> rewards=<r1,r2,...>
     IMPORTANT: NO score= field. Its presence is a format violation.
     """
+    clamped = [_clamp_score(r) for r in rewards]
     print(
         f"[END] success={str(success).lower()} steps={steps} "
-        f"rewards={','.join(f'{r:.2f}' for r in rewards) if rewards else '0.10'}",
+        f"rewards={','.join(f'{r:.3f}' for r in clamped) if clamped else '0.100'}",
         flush=True,
     )
 
@@ -262,8 +268,8 @@ def run_task(client: OpenAI, task_id: str) -> None:
                                    timeout=30.0)
             step_resp.raise_for_status()
             step_data   = step_resp.json()
-            reward = float(step_data.get("reward", 0.0))
-            reward = max(0.10, min(0.90, reward))
+            reward = float(step_data.get("reward", 0.001))
+            reward = _clamp_score(max(0.10, min(0.90, reward)))
             done        = bool(step_data.get("done", False))
             observation = step_data.get("observation", {})
  

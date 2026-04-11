@@ -21,6 +21,10 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional
 
+
+def _clamp_score(score: float) -> float:
+    return max(0.001, min(0.999, float(score)))
+
 import sys
 import os
 
@@ -182,7 +186,7 @@ def _compute_required_elements_score(response_body: str, required: List[str]) ->
         Float between 0.0 and 1.0.
     """
     if not required:
-        return 1.0
+        return _clamp_score(1.0)
     body_lower = response_body.lower()
     found = sum(1 for el in required if el.lower() in body_lower)
     return found / len(required)
@@ -200,7 +204,7 @@ def _compute_forbidden_elements_score(response_body: str, forbidden: List[str]) 
         Float between 0.0 and 1.0.
     """
     if not forbidden:
-        return 1.0
+        return _clamp_score(1.0)
     body_lower = response_body.lower()
     found = sum(1 for el in forbidden if el.lower() in body_lower)
     return max(0.0, 1.0 - (found / len(forbidden)))
@@ -226,17 +230,17 @@ def _compute_length_score(response_body: str) -> float:
     """
     length = len(response_body)
     if length < 100:
-        return 0.0
+        return _clamp_score(0.0)
     elif length < 200:
-        return 0.3
+        return _clamp_score(0.3)
     elif length < 400:
         return 0.6
     elif length <= 800:
-        return 1.0
+        return _clamp_score(1.0)
     elif length <= 1200:
         return 0.75
     else:
-        return 0.4
+        return _clamp_score(0.4)
 
 
 def _compute_structure_score(response_body: str) -> float:
@@ -320,10 +324,10 @@ def _compute_commitment_clarity_score(response_body: str) -> float:
     count = sum(1 for cp in commitment_phrases if cp in body_lower)
 
     if count >= 2:
-        return 1.0
+        return _clamp_score(1.0)
     elif count == 1:
-        return 0.5
-    return 0.0
+        return _clamp_score(0.5)
+    return _clamp_score(0.0)
 
 
 def _compute_kb_compliance_score(
@@ -346,7 +350,7 @@ def _compute_kb_compliance_score(
         Float between 0.0 and 1.0.
     """
     if not kb_articles:
-        return 0.5
+        return _clamp_score(0.5)
 
     relevant = [
         kb for kb in kb_articles
@@ -354,7 +358,7 @@ def _compute_kb_compliance_score(
     ]
 
     if not relevant:
-        return 0.5
+        return _clamp_score(0.5)
 
     time_pattern = re.compile(
         r"(\d+)(?:\s*[-\u2013]\s*(\d+))?\s*(business\s*days?|hours?|days?|weeks?|mins?|minutes?)",
@@ -418,11 +422,11 @@ def _compute_kb_compliance_score(
                             contradictions += 1
 
     if contradictions == 0:
-        return 1.0
+        return _clamp_score(1.0)
     elif contradictions == 1:
-        return 0.4
+        return _clamp_score(0.4)
     else:
-        return 0.0
+        return _clamp_score(0.0)
 
 
 def _compute_escalation_score(
@@ -448,7 +452,7 @@ def _compute_escalation_score(
         ticket_priority in ("CRITICAL", "HIGH")
         and ticket_previous_interactions > 2
     )
-    return 1.0 if action_escalate == should_escalate else 0.0
+    return _clamp_score(1.0) if action_escalate == should_escalate else _clamp_score(0.0)
 
 
 def _compute_specificity_score(
@@ -485,7 +489,7 @@ def _compute_specificity_score(
         Float: 0.0, 0.4, 0.7, or 1.0.
     """
     if not ticket or not response_body:
-        return 0.0
+        return _clamp_score(0.0)
 
     body_lower = response_body.lower()
     details_found = 0
@@ -560,14 +564,14 @@ def _compute_specificity_score(
             
     # Scoring tiers
     if details_found <= 1:
-        return 0.0
+        return _clamp_score(0.0)
     elif details_found == 2:
-        return 0.4
+        return _clamp_score(0.4)
     elif details_found == 3:
-        return 0.7
+        return _clamp_score(0.7)
     else:
         # 4 or 5 details
-        return 1.0
+        return _clamp_score(1.0)
 
 
 def _compute_coherence_score(
@@ -814,7 +818,7 @@ def grade_resolve(
         + WEIGHTS["coherence"] * coherence_score
     )
 
-    final_total = max(0.01, min(0.99, total))
+    final_total = _clamp_score(max(0.01, min(0.99, total)))
 
     breakdown = {
         "required_elements": round(req_score, 4),
@@ -839,7 +843,7 @@ def grade_resolve(
     )
 
     return TicketReward(
-        value=round(final_total, 4),
+        value=_clamp_score(round(final_total, 4)),
         breakdown=breakdown,
         feedback=feedback,
     )

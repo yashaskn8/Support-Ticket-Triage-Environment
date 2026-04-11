@@ -13,6 +13,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+def _clamp_score(score: float) -> float:
+    return max(0.001, min(0.999, float(score)))
+
 import sys
 import os
 
@@ -216,7 +219,7 @@ def grade_prioritize(
     """
     if action is None:
         return TicketReward(
-            value=0.01,
+            value=_clamp_score(0.01),
             breakdown={"priority": 0.0, "team": 0.0, "resolution": 0.0},
             feedback="Invalid or missing action.",
         )
@@ -283,7 +286,7 @@ def grade_prioritize(
 
     # Compute total
     total = (0.40 * p_score) + (0.35 * t_score) + (0.25 * h_score) - penalty
-    total = max(0.01, min(0.99, total))
+    total = _clamp_score(max(0.01, min(0.99, total)))
 
     # Determine team match description
     if action.assigned_team == expected_team:

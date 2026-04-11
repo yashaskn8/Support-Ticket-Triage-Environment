@@ -17,6 +17,9 @@ import threading
 import uuid
 from typing import Any, Dict, List
 
+def _clamp_score(score: float) -> float:
+    return max(0.001, min(0.999, float(score)))
+
 from fastapi import HTTPException
 
 from server.models import (
@@ -235,7 +238,7 @@ class SupportTriageEnv:
         if not self._initialized:
             return {
                 "observation": {},
-                "reward": 0.10,
+                "reward": _clamp_score(0.10),
                 "done": False,
                 "info": {
                     "error": "Environment not initialized. Call reset() first.",
@@ -276,7 +279,7 @@ class SupportTriageEnv:
 
                 return {
                     "observation": {},
-                    "reward": 0.10,
+                    "reward": _clamp_score(0.10),
                     "done": done,
                     "info": {
                         "error": f"Action validation error: {str(e)}",
@@ -321,7 +324,7 @@ class SupportTriageEnv:
                                 penalties.append("schema_abuse_penalty: -0.10")
 
                 # Clamp after penalties — strictly within (0, 1) to satisfy validator
-                final_reward = max(0.10, min(0.90, raw_reward))
+                final_reward = _clamp_score(max(0.10, min(0.90, raw_reward)))
 
                 # Track step rewards and penalties
                 self._step_rewards.append(final_reward)
@@ -407,7 +410,7 @@ class SupportTriageEnv:
             except Exception as e:
                 return {
                     "observation": {},
-                    "reward": 0.10,
+                    "reward": _clamp_score(0.10),
                     "done": False,
                     "info": {
                         "error": f"Step execution error: {str(e)}",

@@ -22,7 +22,17 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+def _clamp_score(score: float) -> float:
+    """
+    Clamp score to open interval (0, 1) strictly.
+    The validator rejects 0.0 and 1.0 exactly.
+    Minimum representable score: 0.001
+    Maximum representable score: 0.999
+    """
+    return max(0.001, min(0.999, float(score)))
+
 import sys
+
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -186,11 +196,11 @@ def _compute_evidence_score(ticket_text: str, category: str) -> float:
         Float between 0.0 and 1.0 representing keyword density.
     """
     if not ticket_text or category not in _EVIDENCE_KEYWORDS:
-        return 0.0
+        return _clamp_score(0.0)
 
     keywords = _EVIDENCE_KEYWORDS[category]
     if not keywords:
-        return 0.0
+        return _clamp_score(0.0)
 
     text_lower = ticket_text.lower()
     found_keywords = sum(1 for kw in keywords if kw in text_lower)
@@ -202,7 +212,7 @@ def _compute_evidence_score(ticket_text: str, category: str) -> float:
     # falls strictly inside the (0.41, 0.64) range.
     smoothed_kw = found_keywords + 1.0
     evidence = min(1.0, smoothed_kw / total_keywords)
-    return evidence
+    return _clamp_score(evidence)
 
 
 def grade_classify(
@@ -230,7 +240,7 @@ def grade_classify(
     """
     if action is None:
         return TicketReward(
-            value=0.01,
+            value=_clamp_score(0.01),
             breakdown={
                 "exact_match": 0.0,
                 "super_category_match": 0.0,
@@ -250,7 +260,7 @@ def grade_classify(
     if predicted == expected:
         # Exact match — always 0.99, no modifier needed
         return TicketReward(
-            value=0.99,
+            value=_clamp_score(0.99),
             breakdown={
                 "exact_match": 1.0,
                 "super_category_match": 1.0,
@@ -270,7 +280,7 @@ def grade_classify(
         # Higher base ensures that even with -0.10 repetition penalty,
         # the reward stays above the 0.39 incentive gap.
         final = 0.50 + (0.15 * evidence)
-        final = round(final, 4)
+        final = _clamp_score(round(final, 4))
         return TicketReward(
             value=final,
             breakdown={
@@ -288,7 +298,7 @@ def grade_classify(
         )
 
     # No match: base 0.01 + up to 0.15 from evidence
-    final = max(0.01, round(0.15 * evidence, 4))
+    final = _clamp_score(max(0.01, round(0.15 * evidence, 4)))
     return TicketReward(
         value=final,
         breakdown={
