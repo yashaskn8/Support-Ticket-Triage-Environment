@@ -33,7 +33,9 @@ except ImportError as e:
 
 # ── MANDATORY environment variables (checklist requirement) ────────────
 API_BASE_URL     = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME       = os.getenv("MODEL_NAME",   "Qwen/Qwen2.5-72B-Instruct")
+MODEL_NAME       = os.getenv("MODEL_NAME")
+if not MODEL_NAME:
+    raise ValueError("MODEL_NAME environment variable is required.")
 HF_TOKEN         = os.getenv("HF_TOKEN")          # No default — required
 LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")  # Optional: from_docker_image()
 ENV_BASE_URL     = os.getenv("ENV_BASE_URL", "http://localhost:7860")
