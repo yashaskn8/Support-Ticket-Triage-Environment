@@ -9,7 +9,7 @@ All debug output goes to stderr.
 
 Required stdout format (key=value, NOT JSON):
 [START] task=<task_name> env=support-triage-env model=<MODEL_NAME>
-[STEP] step=<n> action=<action_json> reward=<0.00> done=<true|false> error=<msg|null>
+[STEP] step=<n> action=<action_json> reward=<0.01> done=<true|false> error=<msg|null>
 [END] success=<true|false> steps=<n> rewards=<r1,r2,...,rn>
 """
 
