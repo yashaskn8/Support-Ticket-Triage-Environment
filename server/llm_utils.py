@@ -2,8 +2,7 @@
 Inference script for the Support Triage Environment.
 
 Runs all three tasks (classify -> prioritize -> resolve) against the
-environment HTTP API using an LLM for decision-making via the OpenAI
-Python client.
+Uses Hugging Face API with HF_TOKEN from environment.
 
 CRITICAL: stdout contains ONLY [START], [STEP], [END] lines.
 All debug output goes to stderr.
@@ -466,9 +465,7 @@ def run_episode(
         max_retries = 3
 
         for attempt in range(3):
-            if not HF_TOKEN:
-                print(f"  Step {step_num}: No HF_TOKEN, using fallback", file=sys.stderr)
-                break
+
 
             try:
                 _log_stderr(f"  [Task {task_id}] Step {step_num}: Calling LLM (attempt {attempt+1}/{max_retries})...")
@@ -500,8 +497,8 @@ def run_episode(
                 time.sleep(2 ** attempt)
 
         if action_dict is None:
-            _log_stderr(f"  [Task {task_id}] Step {step_num}: Using local heuristic fallback.")
-            action_dict = _get_fallback_action(task_id, observation)
+            _log_stderr(f"  [Task {task_id}] Step {step_num}: Using local heuristic default.")
+            action_dict = _get_default_action(task_id, observation)
 
         # Submit action to environment with timeout handling
         try:
@@ -558,9 +555,9 @@ def run_episode(
         "success": success,
     }
 
-def _get_fallback_action(task_id: str, observation: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def _get_default_action(task_id: str, observation: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
-    HONEST FALLBACK: Returns static, schema-compliant defaults when the LLM API fails.
+    HEURISTIC DEFAULT: Returns static, schema-compliant defaults when the LLM API fails.
     Zero ground-truth logic is imported or computed here to prevent data leakage.
     """
     if task_id == "classify":
@@ -580,15 +577,15 @@ def _get_fallback_action(task_id: str, observation: Optional[Dict[str, Any]] = N
     elif task_id == "resolve":
         # Must be >= 50 chars to pass the Pydantic schema validation.
         # Intentionally generic to avoid gaming the 'specificity' or 'keyword' graders.
-        fallback_body = (
+        default_body = (
             "Thank you for reaching out to support. We are currently experiencing "
             "high volume or API latency. Your request has been safely logged, "
             "and a representative will review it shortly."
         )
         return {
             "response_subject": "Re: Support Ticket Update",
-            "response_body": fallback_body,
-            "internal_notes": "SYSTEM FALLBACK: LLM inference failed (e.g., 402/503 error). Applied safe defaults.",
+            "response_body": default_body,
+            "internal_notes": "SYSTEM DEFAULT: LLM inference failed (e.g., 402/503 error). Applied safe defaults.",
             "escalate": False
         }
 
@@ -716,7 +713,7 @@ def main() -> None:
     Main entry point: run all three task episodes sequentially.
 
     Reads credentials from server.environment variables only.
-    Uses OpenAI Python client with OPENAI_API_KEY (fallback to HF_TOKEN).
+    Uses Hugging Face API with HF_TOKEN from environment.
     Polls health endpoint before starting. Prints summary table to stderr
     with baseline comparison columns if baseline_scores.json exists.
     """

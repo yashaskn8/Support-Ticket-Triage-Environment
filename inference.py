@@ -23,7 +23,7 @@ from openai import OpenAI
 try:
     from server.llm_utils import (
         parse_llm_json,
-        _get_fallback_action,
+        _get_default_action,
         LEGACY_RESOLVE_PROMPT,
         build_resolve_user_message,
     )
@@ -251,7 +251,7 @@ def run_task(client: OpenAI, task_id: str) -> None:
             llm_text = call_llm(client, TASK_PROMPTS[task_id], user_msg,
                                  temperature, max_tokens)
             action = (build_action(task_id, llm_text) if llm_text
-                      else _get_fallback_action(task_id, observation))
+                      else _get_default_action(task_id, observation))
 
             step_resp = httpx.post(f"{ENV_BASE_URL}/step",
                                    json={"task_id": task_id, "action": action},
