@@ -84,7 +84,7 @@ class PrioritizeTask:
         self._current_index = 0
         self._step_number = 0
         self._done = False
-        self._cumulative_reward = 0.0
+        self._cumulative_reward = 0.01
         self._sla_table = _SLA_TABLE
         self._max_steps = 10
 
@@ -113,7 +113,7 @@ class PrioritizeTask:
         self._current_index = 0
         self._step_number = 0
         self._done = False
-        self._cumulative_reward = 0.0
+        self._cumulative_reward = 0.01
         return self.get_observation()
 
     def _enrich_ground_truth(

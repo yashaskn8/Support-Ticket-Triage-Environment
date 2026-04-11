@@ -157,7 +157,7 @@ def detect_suspicious_scores(results: dict) -> List[str]:
     tasks = results.get("tasks", {})
 
     for task_id, task_data in tasks.items():
-        mean_score = task_data.get("mean_score", 0.0)
+        mean_score = task_data.get("mean_score", 0.01)
         rewards = task_data.get("per_step_rewards", [])
 
         # Check for perfect scores
@@ -175,7 +175,7 @@ def detect_suspicious_scores(results: dict) -> List[str]:
             )
 
         # Check for out-of-range scores
-        if mean_score < 0.0 or mean_score > 1.0:
+        if mean_score < 0.01 or mean_score > 0.99:
             warnings.append(
                 f"{task_id}: mean_score={mean_score:.3f} is outside [0, 1]."
             )
@@ -213,7 +213,7 @@ def _run_task(
     except Exception as e:
         print(f"  ERROR: Reset failed: {e}", file=sys.stderr)
         return {
-            "mean_score": 0.0,
+            "mean_score": 0.01,
             "steps": 0,
             "per_step_rewards": [],
             "success": False,
@@ -278,7 +278,7 @@ def _run_task(
             print(f"  Step {step}: Step API error: {e}", file=sys.stderr)
             rewards.append(0.01)
 
-    mean_score = round(sum(rewards) / len(rewards), 4) if rewards else 0.0
+    mean_score = round(sum(rewards) / len(rewards), 4) if rewards else 0.01
     success = mean_score >= 0.40
 
     print(f"  Result: mean={mean_score:.4f}, steps={step}, success={success}",

@@ -48,7 +48,7 @@ def test_priority_engine_documentation_drop() -> None:
     ticket = {"subject": "Clarification on API", "body": "Need documentation help with error"}
     # clarification (-3), documentation (-3) -> total -3.
     prio = _compute_true_priority(ticket, "TECHNICAL")
-    # 2 (base) + 2 (error) - 3 = 1.0 -> LOW
+    # 2 (base) + 2 (error) - 3 = 0.99 -> LOW
     assert prio == "LOW"
 
 def test_priority_engine_unseen_phrasing() -> None:

@@ -125,7 +125,7 @@ def test_reset_returns_valid_observation(task_id: str) -> None:
     ],
 )
 def test_step_with_valid_action(task_id: str, action_dict: dict) -> None:
-    """Valid actions must return a reward in [0.0, 1.0] with info dict."""
+    """Valid actions must return a reward in [0.01, 0.99] with info dict."""
     env = SupportTriageEnv(task_id=task_id, seed=42)
     env.reset()
 
@@ -135,13 +135,13 @@ def test_step_with_valid_action(task_id: str, action_dict: dict) -> None:
     assert "reward" in result
     assert "done" in result
     assert "info" in result
-    assert 0.0 <= result["reward"] <= 1.0
+    assert 0.01 <= result["reward"] <= 0.99
     assert "penalties" in result["info"]
 
 
 @pytest.mark.parametrize("task_id", ["classify", "prioritize", "resolve"])
 def test_step_with_invalid_action(task_id: str) -> None:
-    """Invalid actions must return 0.0 reward with error in info."""
+    """Invalid actions must return 0.01 reward with error in info."""
     env = SupportTriageEnv(task_id=task_id, seed=42)
     env.reset()
 
@@ -180,14 +180,14 @@ def test_episode_completes(task_id: str, max_steps: int, action_dict: dict) -> N
 
 
 def test_grader_classify_correct_match() -> None:
-    """Classify grader returns 1.0 for exact match."""
+    """Classify grader returns 0.99 for exact match."""
     action = ClassifyAction(category="BILLING")
     ticket = {"subject": "Need a refund", "body": "Please process a refund for my missing invoice charge."}
 
     reward = grade_classify(action, ticket)
 
     assert reward.value == 0.99
-    assert reward.breakdown["exact_match"] == 1.0
+    assert reward.breakdown["exact_match"] == 0.99
 
 
 def test_grader_classify_mismatch() -> None:
@@ -212,7 +212,7 @@ def test_grader_classify_super_category_match() -> None:
     reward = grade_classify(action, ticket)
     # Since BILLING and ACCOUNT are both FINANCIAL, score should be in [0.40, 0.65]
     assert 0.40 <= reward.value <= 0.65, f"Super-category should be in [0.40, 0.65], got {reward.value}"
-    assert reward.breakdown["super_category_match"] == 1.0
+    assert reward.breakdown["super_category_match"] == 0.99
 
 
 def test_grader_classify_zero_floor() -> None:
@@ -222,8 +222,8 @@ def test_grader_classify_zero_floor() -> None:
     ticket = {"subject": "Invoice charge error", "body": "I was charged twice for my subscription payment. Please refund immediately."}
     reward = grade_classify(action, ticket)
     assert reward.value <= 0.10, f"Expected <= 0.10 but got {reward.value}"
-    assert reward.breakdown["exact_match"] == 0.0
-    assert reward.breakdown["super_category_match"] == 0.0
+    assert reward.breakdown["exact_match"] == 0.01
+    assert reward.breakdown["super_category_match"] == 0.01
 
 
 def test_grader_prioritize_partial_credit() -> None:
@@ -235,7 +235,7 @@ def test_grader_prioritize_partial_credit() -> None:
     )
     ticket = {"subject": "Urgent api failure outage", "body": "Production is down!", "previous_interactions": 3}
     reward = grade_prioritize(action, ticket)
-    assert 0.0 < reward.value < 1.0
+    assert 0.01 < reward.value < 0.99
 
 
 def test_grader_prioritize_none_action() -> None:
@@ -281,7 +281,7 @@ def test_grader_resolve_none_action() -> None:
 
 
 def test_grader_resolve_escalation_logic() -> None:
-    """Escalation score = 1.0 when correctly escalating CRITICAL with >2 interactions."""
+    """Escalation score = 0.99 when correctly escalating CRITICAL with >2 interactions."""
     action_escalate = ResolveAction(
         response_subject="Re: Critical issue",
         response_body="Dear Customer,\n\nWe apologize for the critical issue. Our team will resolve this within 2 hours. We have already escalated to engineering.\n\nBest regards,\nCustomer Support Team",
@@ -296,7 +296,7 @@ def test_grader_resolve_escalation_logic() -> None:
         ticket_priority="CRITICAL",
         ticket_previous_interactions=5,
     )
-    assert reward.breakdown["escalation"] == 1.0
+    assert reward.breakdown["escalation"] == 0.99
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -441,7 +441,7 @@ def test_tickets_include_attachments() -> None:
 
 
 def test_rewards_are_clamped() -> None:
-    """All rewards must be in [0.0, 1.0] range."""
+    """All rewards must be in [0.01, 0.99] range."""
     for task_id in ["classify", "prioritize", "resolve"]:
         env = SupportTriageEnv(task_id=task_id, seed=42)
         env.reset()
@@ -457,7 +457,7 @@ def test_rewards_are_clamped() -> None:
             },
         }
         result = env.step(action_map[task_id])
-        assert 0.0 <= result["reward"] <= 1.0, \
+        assert 0.01 <= result["reward"] <= 0.99, \
             f"Reward {result['reward']} out of bounds for {task_id}"
 
 
@@ -540,7 +540,7 @@ def test_grader_classify_with_typos() -> None:
     }
     reward = grade_classify(action, ticket)
     # Should still score > 0 since partial keyword stems like "charg" match
-    assert 0.0 <= reward.value <= 1.0
+    assert 0.01 <= reward.value <= 0.99
     assert isinstance(reward.value, float)
 
 
@@ -552,7 +552,7 @@ def test_grader_classify_with_slang() -> None:
         "body": "yo the whole system is down cant login nothing works smh",
     }
     reward = grade_classify(action, ticket)
-    assert 0.0 <= reward.value <= 1.0
+    assert 0.01 <= reward.value <= 0.99
 
 
 def test_grader_classify_with_mixed_casing() -> None:
@@ -576,7 +576,7 @@ def test_grader_classify_with_punctuation_noise() -> None:
         "body": "I was charged twice!!!! Please process a refund ASAP!!!!!!!",
     }
     reward = grade_classify(action, ticket)
-    assert 0.0 <= reward.value <= 1.0
+    assert 0.01 <= reward.value <= 0.99
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -589,7 +589,7 @@ def test_grader_classify_very_short_ticket() -> None:
     action = ClassifyAction(category="GENERAL")
     ticket = {"subject": "Hi", "body": "Help."}
     reward = grade_classify(action, ticket)
-    assert 0.0 <= reward.value <= 1.0
+    assert 0.01 <= reward.value <= 0.99
 
 
 def test_grader_classify_very_long_ticket() -> None:
@@ -602,8 +602,8 @@ def test_grader_classify_very_long_ticket() -> None:
     ) * 20  # ~1200 chars
     ticket = {"subject": "Repeated billing errors", "body": long_body}
     reward = grade_classify(action, ticket)
-    assert 0.0 <= reward.value <= 1.0
-    assert reward.value > 0.0  # "charge", "invoice", "refund" should trigger BILLING
+    assert 0.01 <= reward.value <= 0.99
+    assert reward.value > 0.01  # "charge", "invoice", "refund" should trigger BILLING
 
 
 def test_grader_classify_neutral_tone() -> None:
@@ -614,7 +614,7 @@ def test_grader_classify_neutral_tone() -> None:
         "body": "Hello, I was wondering if you have a roadmap for upcoming features. Thanks.",
     }
     reward = grade_classify(action, ticket)
-    assert reward.value > 0.0  # "feature" and "roadmap" should trigger GENERAL
+    assert reward.value > 0.01  # "feature" and "roadmap" should trigger GENERAL
 
 
 def test_grader_resolve_empty_body_rejected() -> None:
@@ -710,7 +710,7 @@ def test_fetcher_fallback() -> None:
         """Mock that always raises ConnectionError."""
         raise ConnectionError("Mocked connection failure")
 
-    fetcher = RealTimeTicketFetcher(seed=42, timeout=1.0)
+    fetcher = RealTimeTicketFetcher(seed=42, timeout=0.99)
 
     with patch("data.fetcher.requests.get", side_effect=_raise_error):
         tickets = fetcher.fetch(n=10)
@@ -819,7 +819,7 @@ def test_cumulative_reward_running_sum() -> None:
     env = SupportTriageEnv(task_id="classify", seed=42)
     env.reset()
 
-    running_sum = 0.0
+    running_sum = 0.01
     for _ in range(3):
         result = env.step({"category": "BILLING"})
         running_sum += result["reward"]
@@ -872,8 +872,8 @@ def test_kb_compliance_contradiction() -> None:
     )
 
     # The kb_compliance score should be penalized for contradicting "3-5 business days"
-    kb_score = reward.breakdown.get("kb_compliance", 1.0)
-    assert kb_score < 1.0, f"Expected KB compliance < 1.0 for contradiction, got {kb_score}"
+    kb_score = reward.breakdown.get("kb_compliance", 0.99)
+    assert kb_score < 0.99, f"Expected KB compliance < 0.99 for contradiction, got {kb_score}"
 
 
 def test_queue_summary_decrements() -> None:
@@ -916,7 +916,7 @@ def test_commitment_clarity_score() -> None:
         ticket_previous_interactions=0,
     )
 
-    commitment_score = reward.breakdown.get("commitment_clarity", 0.0)
+    commitment_score = reward.breakdown.get("commitment_clarity", 0.01)
     assert commitment_score >= 0.5, \
         f"Expected commitment clarity >= 0.5, got {commitment_score}"
 
@@ -958,7 +958,7 @@ def test_schema_abuse_penalty_resolve() -> None:
 
 
 def test_escalation_true_when_critical_and_many_interactions() -> None:
-    """Escalation score = 1.0 when escalate=True with CRITICAL and >2 interactions."""
+    """Escalation score = 0.99 when escalate=True with CRITICAL and >2 interactions."""
     action = ResolveAction(
         response_subject="Re: Critical issue",
         response_body=(
@@ -978,11 +978,11 @@ def test_escalation_true_when_critical_and_many_interactions() -> None:
         ticket_priority="CRITICAL",
         ticket_previous_interactions=3,
     )
-    assert reward.breakdown["escalation"] == 1.0
+    assert reward.breakdown["escalation"] == 0.99
 
 
 def test_escalation_false_when_critical_but_few_interactions() -> None:
-    """Escalation score = 1.0 when escalate=False with CRITICAL but <=2 interactions."""
+    """Escalation score = 0.99 when escalate=False with CRITICAL but <=2 interactions."""
     action = ResolveAction(
         response_subject="Re: Critical issue",
         response_body=(
@@ -1002,11 +1002,11 @@ def test_escalation_false_when_critical_but_few_interactions() -> None:
         ticket_priority="CRITICAL",
         ticket_previous_interactions=1,
     )
-    assert reward.breakdown["escalation"] == 1.0
+    assert reward.breakdown["escalation"] == 0.99
 
 
 def test_escalation_penalised_when_false_positive() -> None:
-    """Escalation score = 0.0 when escalate=True for LOW priority (false positive)."""
+    """Escalation score = 0.01 when escalate=True for LOW priority (false positive)."""
     action = ResolveAction(
         response_subject="Re: General question",
         response_body=(
@@ -1026,7 +1026,7 @@ def test_escalation_penalised_when_false_positive() -> None:
         ticket_priority="LOW",
         ticket_previous_interactions=5,
     )
-    assert reward.breakdown["escalation"] == 0.0
+    assert reward.breakdown["escalation"] == 0.01
 
 
 def test_build_resolve_user_message_surfaces_escalation() -> None:
@@ -1296,7 +1296,7 @@ def test_baseline_scores_structure() -> None:
     assert set(tasks.keys()) == {"classify", "prioritize", "resolve"}
     
     for task_name, items in tasks.items():
-        assert 0.0 <= items.get("mean_score", -1.0) <= 1.0
+        assert 0.01 <= items.get("mean_score", -0.99) <= 0.99
         assert isinstance(items.get("per_step_rewards"), list)
         assert len(items["per_step_rewards"]) > 0
         assert isinstance(items.get("success"), bool)
@@ -1332,9 +1332,9 @@ def test_baseline_runner_produces_valid_json() -> None:
     # Verify detect_suspicious_scores catches perfect scores
     suspicious = {
         "tasks": {
-            "classify": {"mean_score": 1.0, "per_step_rewards": [1.0, 1.0]},
-            "prioritize": {"mean_score": 1.0, "per_step_rewards": [1.0, 1.0]},
-            "resolve": {"mean_score": 1.0, "per_step_rewards": [1.0, 1.0]},
+            "classify": {"mean_score": 0.99, "per_step_rewards": [0.99, 0.99]},
+            "prioritize": {"mean_score": 0.99, "per_step_rewards": [0.99, 0.99]},
+            "resolve": {"mean_score": 0.99, "per_step_rewards": [0.99, 0.99]},
         }
     }
     warnings = detect_suspicious_scores(suspicious)
@@ -1504,7 +1504,7 @@ def test_resolve_weights_sum_to_one() -> None:
     """Resolve grader weights must sum to exactly 1.0."""
     from server.graders.grader_resolve import WEIGHTS
     total = sum(WEIGHTS.values())
-    assert abs(total - 1.0) < 1e-9, f"Weights sum to {total}, expected 1.0"
+    assert abs(total - 0.99) < 1e-9, f"Weights sum to {total}, expected 0.99"
 
 
 def test_no_jsonplaceholder_in_sources() -> None:
@@ -1536,7 +1536,7 @@ def test_grader_weights_sum() -> None:
     """Ensure the sum of WEIGHTS in grader_resolve is exactly 1.0."""
     from server.graders.grader_resolve import WEIGHTS
     total = sum(WEIGHTS.values())
-    assert abs(total - 1.0) < 1e-6, f"WEIGHTS must sum to exactly 1.0, got {total}"
+    assert abs(total - 0.99) < 1e-6, f"WEIGHTS must sum to exactly 0.99, got {total}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1595,7 +1595,7 @@ def test_source_metadata_after_fetch() -> None:
     def _raise(*args, **kwargs):
         raise ConnectionError("Mock")
 
-    fetcher = RealTimeTicketFetcher(seed=42, timeout=1.0)
+    fetcher = RealTimeTicketFetcher(seed=42, timeout=0.99)
     with patch("data.fetcher.requests.get", side_effect=_raise):
         fetcher.fetch(n=5)
 
@@ -1605,13 +1605,13 @@ def test_source_metadata_after_fetch() -> None:
 
 
 def test_trajectory_bonus_returns_zero_under_3_steps() -> None:
-    """Trajectory bonus is 0.0 with fewer than 3 steps."""
+    """Trajectory bonus is 0.01 with fewer than 3 steps."""
     env = SupportTriageEnv(task_id="classify", seed=42)
     env.reset()
     env.step({"category": "BILLING"})
     env.step({"category": "BILLING"})
     # Only 2 steps taken, trajectory bonus should not apply
-    assert env._compute_trajectory_bonus() == 0.0
+    assert env._compute_trajectory_bonus() == 0.01
 
 
 def test_trajectory_bonus_computes_with_enough_steps() -> None:
@@ -1621,7 +1621,7 @@ def test_trajectory_bonus_computes_with_enough_steps() -> None:
     for _ in range(5):
         env.step({"category": "BILLING"})
     bonus = env._compute_trajectory_bonus()
-    assert 0.0 <= bonus <= 0.10
+    assert 0.01 <= bonus <= 0.10
 
 
 def test_trajectory_bonus_in_final_step_info() -> None:
@@ -1685,7 +1685,7 @@ def test_coherence_detects_informal_tone() -> None:
         ticket_priority="LOW", ticket_previous_interactions=0,
     )
     tonal = reward.breakdown["coherence_breakdown"]["tonal_consistency"]
-    assert tonal < 1.0, f"Expected tonal_consistency < 1.0 for informal response, got {tonal}"
+    assert tonal < 0.99, f"Expected tonal_consistency < 0.99 for informal response, got {tonal}"
 
 
 @pytest.mark.asyncio
@@ -1713,7 +1713,7 @@ def test_episode_analytics_in_state() -> None:
     assert "max_reward_this_episode" in state
     assert "penalties_applied_total" in state
     assert "steps_remaining" in state
-    assert state["mean_reward_so_far"] >= 0.0
+    assert state["mean_reward_so_far"] >= 0.01
     assert state["steps_remaining"] >= 0
 
 
@@ -1762,7 +1762,7 @@ def test_prioritize_absolute_difference_brackets() -> None:
     ticket = {"subject": "General question about features", "body": "I have a question about your product roadmap and upcoming features."}
     reward = grade_prioritize(action, ticket)
     # Should get reasonable score for a LOW-priority general ticket
-    assert reward.value > 0.0
+    assert reward.value > 0.01
     assert "resolution" in reward.breakdown
 
 
@@ -1770,5 +1770,5 @@ def test_classify_incentive_ordering_assertion() -> None:
     """Verify the incentive ordering module-level assertion exists."""
     import server.graders.grader_classify as gc
     source = open(gc.__file__).read()
-    assert "assert 1.0 > 0.65 > 0.15" in source
+    assert "assert 0.99 > 0.65 > 0.15" in source
 

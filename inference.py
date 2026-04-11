@@ -255,7 +255,7 @@ def run_task(client: OpenAI, task_id: str) -> None:
 
     log_start(task=task_id, model=MODEL_NAME)
 
-    rewards, steps, success, mean_score = [], 0, False, 0.0
+    rewards, steps, success, mean_score = [], 0, False, 0.01
 
     try:
         reset_resp = httpx.post(f"{ENV_BASE_URL}/reset",

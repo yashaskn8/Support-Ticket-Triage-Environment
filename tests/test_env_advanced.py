@@ -168,7 +168,7 @@ def test_evidence_score_zero_for_wrong_category() -> None:
 
 
 def test_classify_exact_match_always_outscores_super_category() -> None:
-    """Exact match (1.0) must always outscore super-category match (<= 0.50)."""
+    """Exact match (0.99) must always outscore super-category match (<= 0.50)."""
     ticket = {"subject": "Refund request", "body": "I need a refund for invoice."}
     text = "Refund request I need a refund for invoice"
     # Exact match: predict BILLING on BILLING ticket
@@ -223,8 +223,8 @@ def test_prioritize_wrong_team_zeroes_team_score() -> None:
         priority="MEDIUM", assigned_team="tech_team", estimated_resolution_hours=24
     )
     reward = grade_prioritize(action, ticket)
-    assert reward.breakdown["team"] == 0.0, (
-        f"Wrong team routing should score 0.0, got {reward.breakdown['team']}"
+    assert reward.breakdown["team"] == 0.01, (
+        f"Wrong team routing should score 0.01, got {reward.breakdown['team']}"
     )
 
 
@@ -276,7 +276,7 @@ def test_resolve_forbidden_elements_penalise_known_phrases() -> None:
     )
     ticket = {"subject": "Problem", "body": "Help me."}
     r = grade_resolve(action, ticket, "Problem", "LOW", 0)
-    assert r.breakdown["forbidden_elements"] < 1.0, (
+    assert r.breakdown["forbidden_elements"] < 0.99, (
         f"Forbidden phrases should reduce forbidden_elements, got {r.breakdown['forbidden_elements']}"
     )
 
@@ -306,7 +306,7 @@ def test_resolve_length_score_normalizes_body_length() -> None:
 
 
 def test_resolve_escalation_correctly_evaluates_medium_priority() -> None:
-    """Escalation on MEDIUM priority with few interactions should score 1.0 only when escalate=False."""
+    """Escalation on MEDIUM priority with few interactions should score 0.99 only when escalate=False."""
     action_no_esc = ResolveAction(
         response_subject="Re: Question", response_body=(
             "Dear Customer,\n\nWe apologize for any confusion. Our team will "
@@ -348,8 +348,8 @@ def test_classify_prioritize_agree_on_category() -> None:
         priority="CRITICAL", assigned_team=expected_team, estimated_resolution_hours=2
     )
     reward = grade_prioritize(action, ticket)
-    assert reward.breakdown["team"] == 1.0, (
-        "Team routing using classify's category should score 1.0 on prioritize grader"
+    assert reward.breakdown["team"] == 0.99, (
+        "Team routing using classify's category should score 0.99 on prioritize grader"
     )
 
 
@@ -392,7 +392,7 @@ def test_env_multiple_resets_dont_leak_state() -> None:
         state = env.state()
         episode_ids.add(state["episode_id"])
         assert state["step_number"] == 0
-        assert state["cumulative_reward"] == 0.0
+        assert state["cumulative_reward"] == 0.01
     assert len(episode_ids) == 5, "5 resets should produce 5 unique episode_ids"
 
 
