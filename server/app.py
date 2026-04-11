@@ -23,6 +23,7 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", message=".*urllib3.*charset.*")
 
+import os
 import pathlib
 from typing import Any, Dict, List, Optional
 
@@ -337,10 +338,8 @@ def main():
     """Entry point for the TriageFlowEnv server."""
     import sys
 
-    port = _resolve_port(7860)
-
-    is_windows = sys.platform.startswith("win")
-    bind_host = "127.0.0.1" if is_windows else "0.0.0.0"
+    port = int(os.getenv('PORT', 7860))
+    bind_host = "0.0.0.0"
 
     print(f"""
 +------------------------------------------------------+
@@ -350,7 +349,7 @@ def main():
 |  Docs : http://{bind_host}:{port}/docs{' ' * (29 - len(str(port)))}|
 +------------------------------------------------------+
 
-    Test in PowerShell: curl.exe http://127.0.0.1:{port}/health
+    Test: curl http://localhost:{port}/health
     Stop server:        Ctrl+C
 """)
 

@@ -28,7 +28,11 @@ try:
         build_resolve_user_message,
     )
 except ImportError as e:
-    print(f"[ERROR] Cannot import server.llm_utils: {e}", file=sys.stderr)
+    print(
+        f"[ERROR] Cannot import server.llm_utils: {e}. "
+        "Run inference.py from the repository root.",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 # ── MANDATORY environment variables (checklist requirement) ────────────
@@ -286,10 +290,11 @@ def main() -> None:
     print(f"[DEBUG] API_BASE_URL={API_BASE_URL}", file=sys.stderr, flush=True)
     print(f"[DEBUG] MODEL_NAME={MODEL_NAME}", file=sys.stderr, flush=True)
 
-    if not HF_TOKEN:
+    if HF_TOKEN is None:
         raise ValueError(
             "HF_TOKEN environment variable is required. "
-            "Set it before running: export HF_TOKEN=<your-token>"
+            "Set it to your HuggingFace API token before "
+            "running inference.py."
         )
 
     client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
