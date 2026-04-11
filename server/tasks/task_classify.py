@@ -181,7 +181,7 @@ class ClassifyTask:
             Tuple of (observation, reward, done, info).
         """
         if self._done:
-            return self.get_observation(), 0.01, True, {"error": "Episode already done."}
+            return self.get_observation(), 0.10, True, {"error": "Episode already done."}
 
         ticket = self._tickets[self._current_index]
 
@@ -192,7 +192,7 @@ class ClassifyTask:
         reward = grade_classify(action, ticket, ticket_text=ticket_text)
 
         # Clamp reward — strictly within (0, 1) to satisfy validator
-        clamped = max(0.01, min(0.99, reward.value))
+        clamped = max(0.10, min(0.90, reward.value))
         if clamped != reward.value:
             reward = TicketReward(
                 value=clamped,
